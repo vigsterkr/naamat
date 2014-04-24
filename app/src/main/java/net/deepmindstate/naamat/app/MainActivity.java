@@ -8,6 +8,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
@@ -15,6 +16,9 @@ import android.view.WindowManager;
 import static android.content.pm.ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE;
 
 public class MainActivity extends Activity {
+
+    public static String START_ACTION = "net.deepmindstate.naamat.app.startSlideshow";
+    public static String STOP_ACTION = "net.deepmindstate.naamat.app.stopSlideshow";
 
     Networking networkHandler;
     NetworkChangeReceiver nwc;
@@ -36,8 +40,10 @@ public class MainActivity extends Activity {
         netIntentFilter.addAction(WifiManager.WIFI_STATE_CHANGED_ACTION);
         registerReceiver(networkHandler.wifiChangeReceiver, netIntentFilter);
         nwc = new NetworkChangeReceiver();
-        IntentFilter myIntentFilter = new IntentFilter("startSlideshow");
-        registerReceiver( nwc, myIntentFilter);
+        IntentFilter myIntentFilter = new IntentFilter();
+        myIntentFilter.addAction(START_ACTION);
+        myIntentFilter.addAction(STOP_ACTION);
+        registerReceiver(nwc, myIntentFilter);
 
         super.onResume();
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
@@ -65,7 +71,8 @@ public class MainActivity extends Activity {
         @SuppressLint("UseValueOf")
         public void onReceive(Context c, Intent intent) {
             String action  = intent.getAction();
-            if(action.equals("startSlideshow")) {
+            if(action.equals(START_ACTION)) {
+                Log.d("broadcast", "start slideshow");
                 new ChangeImageTask(MainActivity.this).execute();
             }
         }
