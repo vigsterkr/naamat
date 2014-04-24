@@ -27,7 +27,7 @@ public class Networking {
     WifiChangeReceiver wifiChangeReceiver;
 
     private MulticastSocket socket;
-    private String multicastAddress = "230.192.0.11";
+    private String multicastAddress = "224.0.0.1";
     private InetAddress group;
     private int port = 31337;
 
@@ -70,25 +70,25 @@ public class Networking {
                 WifiManager.MulticastLock multicastLock = wm.createMulticastLock(DEBUG_TAG);
                 multicastLock.acquire();
 
-                byte[] buf = new byte[128];
+                byte[] buf = new byte[1];
                 while (true) {
                     try {
-                        DatagramPacket packet = new DatagramPacket(buf, 127);
+                        DatagramPacket packet = new DatagramPacket(buf, 1);
                         socket.receive(packet);
-                        byte[] pdu = packet.getData();
-                        if (pdu[0] == 0x0) {
-                            /* stop slideshow packet */
-                            Intent msg = new Intent();
-                            msg.setAction(MainActivity.STOP_ACTION);
-                            activity.sendBroadcast(msg);
-                        } else {
-                            //if (pdu[0] == 0xFF) {
-                            /* start slideshow packet */
-                            Log.d(DEBUG_TAG, "got start slideshow packet");
+//                        byte[] pdu = packet.getData();
+//                        if (pdu[0] == 0x0) {
+//                            /* stop slideshow packet */
+//                            Intent msg = new Intent();
+//                            msg.setAction(MainActivity.STOP_ACTION);
+//                            activity.sendBroadcast(msg);
+//                        } else {
+//                            //if (pdu[0] == 0xFF) {
+//                            /* start slideshow packet */
+//                            Log.d(DEBUG_TAG, "got start slideshow packet");
                             Intent msg = new Intent();
                             msg.setAction(MainActivity.START_ACTION);
                             activity.sendBroadcast(msg);
-                        }
+//                        }
                     } catch (IOException e) {
                         e.printStackTrace();
                     }

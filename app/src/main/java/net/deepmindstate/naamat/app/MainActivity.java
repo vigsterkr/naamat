@@ -68,12 +68,17 @@ public class MainActivity extends Activity {
     }
 
     class NetworkChangeReceiver extends BroadcastReceiver {
+        boolean launched = false;
         @SuppressLint("UseValueOf")
         public void onReceive(Context c, Intent intent) {
             String action  = intent.getAction();
             if(action.equals(START_ACTION)) {
-                Log.d("broadcast", "start slideshow");
-                new ChangeImageTask(MainActivity.this).execute();
+                Log.d("broadcast", "got stuff");
+                if (!launched) {
+                    Log.d("broadcast", "start slideshow");
+                    new ChangeImageTask(MainActivity.this).execute();
+                    launched = true;
+                }
             }
         }
     }
