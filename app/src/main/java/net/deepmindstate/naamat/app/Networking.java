@@ -16,11 +16,8 @@ import java.net.InetAddress;
 import java.net.MulticastSocket;
 import java.util.List;
 
-/**
- * Created by wiking on 24/04/14.
- */
 public class Networking {
-    private static final String DEBUG_TAG = "NaamatNetwork";
+    private static final String DEBUG_TAG = "Naamat";
 
     Activity activity;
     WifiManager wm;
@@ -41,12 +38,12 @@ public class Networking {
         if(wm != null) {
             if (!wm.isWifiEnabled()) {
                 if (!wm.setWifiEnabled(true)) {
-                    Log.d(DEBUG_TAG, "couldn't enable...");
+                    Log.d(DEBUG_TAG, "Couldn't enable Wifi!");
                     return false;
                 }
             }
         } else {
-            Log.d(DEBUG_TAG, "no wifi manager!!");
+            Log.d(DEBUG_TAG, "Mo wifi manager!!");
         }
 
         return false;
@@ -99,7 +96,7 @@ public class Networking {
     }
 
     private boolean connectToNetwork() {
-        String requiredNetworkSSID = "\"foxhole\"";
+        String requiredNetworkSSID = "\"Laruman\"";
 
         WifiInfo netInfo = wm.getConnectionInfo();
         if (netInfo.getSSID().compareTo(requiredNetworkSSID) == 0) {
@@ -108,7 +105,7 @@ public class Networking {
         } else {
             List<WifiConfiguration> networks = wm.getConfiguredNetworks();
             if (networks == null) {
-                Log.d(DEBUG_TAG, "there are no networks configured");
+                Log.d(DEBUG_TAG, "There are no networks configured!");
                 return false;
             }
 
@@ -142,13 +139,13 @@ public class Networking {
                     case WifiManager.WIFI_STATE_DISABLING:
                     case WifiManager.WIFI_STATE_DISABLED:
                     default:
-                        Log.d(DEBUG_TAG, "wifi disabled!");
+                        Log.d(DEBUG_TAG, "Wifi disabled!");
                 }
 
             } else if(action.equals(WifiManager.SUPPLICANT_CONNECTION_CHANGE_ACTION)) {
                 if (intent.getBooleanExtra(WifiManager.EXTRA_SUPPLICANT_CONNECTED, false)){
                     // we should have an ip address now, let's do multicast
-                    Log.d(DEBUG_TAG, "supplicant connected");
+                    Log.d(DEBUG_TAG, "Supplicant connected");
                     startMulticast();
                 } else {
                     // wifi connection was lost
