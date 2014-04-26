@@ -8,6 +8,8 @@ import android.content.IntentFilter;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
@@ -15,6 +17,8 @@ import android.util.Log;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
 import android.widget.ImageView;
 
 import java.io.File;
@@ -98,9 +102,16 @@ public class MainActivity extends Activity {
     public class ChangeImageTask extends AsyncTask<Void, Bitmap, Void> {
         Activity activity;
         File f;
+        Bitmap currentimage = null;
+        Animation anim_first;
+        Animation anim_in;
+        Animation anim_out;
 
         public ChangeImageTask(Activity a) {
             activity = a;
+            anim_out = AnimationUtils.loadAnimation(activity, android.R.anim.fade_out);
+            anim_in  = AnimationUtils.loadAnimation(activity, android.R.anim.fade_in);
+            anim_first  = AnimationUtils.loadAnimation(activity, android.R.anim.fade_in);
         }
 
         @Override
@@ -114,7 +125,7 @@ public class MainActivity extends Activity {
                     publishProgress(BitmapFactory.decodeFile(f.getAbsolutePath()));
                     try {
                         Log.d(DEBUG_TAG, "Sleeping");
-                        Thread.sleep(3000);
+                        Thread.sleep(6000);
                     } catch (InterruptedException ie) {
                         // nuttin
                     }
@@ -128,10 +139,42 @@ public class MainActivity extends Activity {
         }
 
         protected void onProgressUpdate(Bitmap... bms) {
-            // TODO fadout and fadein
+            final Drawable newdrawable;
             Log.d(DEBUG_TAG, "onProgressUpdate");
-            ImageView imgView = (ImageView) activity.findViewById(R.id.imageView);
-            imgView.setImageBitmap(bms[0]);
+            final ImageView imgView = (ImageView) activity.findViewById(R.id.imageView);
+            newdrawable = new BitmapDrawable(activity.getResources(), bms[0]);
+            if (currentimage != null) {
+                Log.d(DEBUG_TAG, "Fading out, then in");
+                anim_out.setAnimationListener(new Animation.AnimationListener() {
+                                                  @Override
+                                                  public void onAnimationStart(Animation animation) {}
+
+                                                  @Override
+                                                  public void onAnimationRepeat(Animation animation) {}
+
+                                                  @Override
+                                                  public void onAnimationEnd(Animation animation) {
+                                                      imgView.setImageDrawable(newdrawable);
+                                                      anim_in.setAnimationListener(new Animation.AnimationListener() {
+                                                          @Override
+                                                          public void onAnimationStart(Animation animation) {}
+
+                                                          @Override
+                                                          public void onAnimationEnd(Animation animation) {}
+
+                                                          @Override
+                                                          public void onAnimationRepeat(Animation animation) {}
+                                                      });
+                                                      imgView.startAnimation(anim_in);
+                                                  }
+                                              });
+                imgView.startAnimation(anim_out);
+            } else {
+                Log.d(DEBUG_TAG, "First image, only fading in");
+                imgView.setImageDrawable(newdrawable);
+                imgView.startAnimation(anim_first);
+            }
+            currentimage = bms[0];
         }
     }
 }
