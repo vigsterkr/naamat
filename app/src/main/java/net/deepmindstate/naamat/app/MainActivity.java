@@ -1,16 +1,13 @@
 package net.deepmindstate.naamat.app;
 
-import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.pm.ActivityInfo;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.net.wifi.WifiManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
@@ -31,13 +28,14 @@ public class MainActivity extends Activity {
     public static String STOP_ACTION = "net.deepmindstate.naamat.app.stopSlideshow";
 
     Networking networkHandler;
-    NetworkChangeReceiver nwc;
+    SlideShowControlReceiver ssControlReceiver;
 
     @Override
     public void onConfigurationChanged(Configuration newConfig) {
         super.onConfigurationChanged(newConfig);
         Log.d(DEBUG_TAG, "onConfigurationChanged");
-        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+        requestWindowFeature(Window.FEATURE_NO_TITLE);
+        setRequestedOrientation(SCREEN_ORIENTATION_LANDSCAPE);
         setContentView(R.layout.activity_main);
     }
 
@@ -54,16 +52,12 @@ public class MainActivity extends Activity {
     protected void onResume() {
         super.onResume();
         Log.d(DEBUG_TAG, "onResume");
-        IntentFilter netIntentFilter = new IntentFilter();
-        netIntentFilter.addAction(WifiManager.SUPPLICANT_CONNECTION_CHANGE_ACTION);
-        netIntentFilter.addAction(WifiManager.WIFI_STATE_CHANGED_ACTION);
         networkHandler = new Networking(MainActivity.this);
-        registerReceiver(networkHandler.wifiChangeReceiver, netIntentFilter);
-        nwc = new NetworkChangeReceiver();
+        ssControlReceiver = new SlideShowControlReceiver();
         IntentFilter myIntentFilter = new IntentFilter();
         myIntentFilter.addAction(START_ACTION);
         myIntentFilter.addAction(STOP_ACTION);
-        registerReceiver(nwc, myIntentFilter);
+        registerReceiver(ssControlReceiver, myIntentFilter);
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
                 WindowManager.LayoutParams.FLAG_FULLSCREEN);
         View decorView = getWindow().getDecorView();
@@ -74,20 +68,20 @@ public class MainActivity extends Activity {
         int uiOptions = View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
                 | View.SYSTEM_UI_FLAG_FULLSCREEN;
         decorView.setSystemUiVisibility(uiOptions);
-        networkHandler.enableWifi();
     }
 
     @Override
     protected void onPause() {
         super.onPause();
         Log.d(DEBUG_TAG, "onPause");
-        unregisterReceiver(networkHandler.wifiChangeReceiver);
-        unregisterReceiver(nwc);
+        if(networkHandler.nwChangeReceiver != null)
+            unregisterReceiver(networkHandler.nwChangeReceiver);
+        unregisterReceiver(ssControlReceiver);
+        // TODO pause/reset slideshow as well
     }
 
-    public class NetworkChangeReceiver extends BroadcastReceiver {
+    public class SlideShowControlReceiver extends BroadcastReceiver {
         boolean launched = false;
-        @SuppressLint("UseValueOf")
         public void onReceive(Context c, Intent intent) {
             String action  = intent.getAction();
             if(action.equals(START_ACTION)) {
@@ -116,7 +110,7 @@ public class MainActivity extends Activity {
             while (i<1000) {
                 f = new File(Environment.getExternalStorageDirectory()+"/naamat/"+i+".jpg");
                 if (f.exists()) {
-                    Log.d(DEBUG_TAG, "Found a file, publishing progress");
+                    Log.d(DEBUG_TAG, "Found file "+f.getAbsolutePath()+", publishing progress");
                     publishProgress(BitmapFactory.decodeFile(f.getAbsolutePath()));
                     try {
                         Log.d(DEBUG_TAG, "Sleeping");
