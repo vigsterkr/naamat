@@ -2,4 +2,6 @@
 .gradle
 /local.properties
 /.idea/workspace.xml
+/.idea/dictionaries/
+/.idea/inspectionProfiles/
 .DS_Store
