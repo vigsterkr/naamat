@@ -23,7 +23,7 @@ public class Networking {
     WifiManager wm;
     boolean multicastTriggerUp = false;
 
-    private MulticastSocket socket;
+    private MulticastSocket socket, sendsocket;
     private String multicastAddress = "224.0.0.1";
     private InetAddress group;
     private int port = 31337;
@@ -44,6 +44,32 @@ public class Networking {
             nwChangeReceiver= new NetworkChangeReceiver();
             activity.registerReceiver(nwChangeReceiver, filter);
         }
+    }
+
+    public void sendStartMulticast() {
+        Log.d(DEBUG_TAG, "Sending start datagram packet");
+        try {
+            group = InetAddress.getByName(multicastAddress);
+            sendsocket = new MulticastSocket();
+        } catch (IOException e) {
+            e.printStackTrace();
+            Log.wtf(DEBUG_TAG, "Network error: "+e.getMessage());
+        }
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                byte buf[] = new byte[1];
+                buf[0] = 'S';
+                DatagramPacket pack = new DatagramPacket(buf, buf.length, group, port);
+                try {
+                    sendsocket.send(pack);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                sendsocket.close();
+                Log.d(DEBUG_TAG, "Sending socket closed");
+            }
+        }).start();
     }
 
     // TODO creates extra threads
