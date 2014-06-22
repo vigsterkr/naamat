@@ -13,6 +13,7 @@ import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
+import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.View;
 import android.view.Window;
@@ -22,6 +23,8 @@ import android.view.animation.AnimationUtils;
 import android.widget.ImageView;
 
 import java.io.File;
+import java.io.FilenameFilter;
+import java.util.Random;
 
 import static android.content.pm.ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE;
 
@@ -47,6 +50,12 @@ public class MainActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         Log.d(DEBUG_TAG, "onCreate");
+        DisplayMetrics dm = new DisplayMetrics();
+        getWindowManager().getDefaultDisplay().getMetrics(dm);
+        int width=dm.widthPixels;
+        int height=dm.heightPixels;
+        int dens=dm.densityDpi;
+        Log.d(DEBUG_TAG, "Screen width "+width+", height "+height+", dpi "+dens);
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         setRequestedOrientation(SCREEN_ORIENTATION_LANDSCAPE);
         setContentView(R.layout.activity_main);
@@ -101,7 +110,7 @@ public class MainActivity extends Activity {
 
     public class ChangeImageTask extends AsyncTask<Void, Bitmap, Void> {
         Activity activity;
-        File f;
+        File child;
         Bitmap currentimage = null;
         Animation anim_first;
         Animation anim_in;
@@ -110,29 +119,42 @@ public class MainActivity extends Activity {
         public ChangeImageTask(Activity a) {
             activity = a;
             anim_out = AnimationUtils.loadAnimation(activity, android.R.anim.fade_out);
+            anim_out.setDuration(2000);
             anim_in  = AnimationUtils.loadAnimation(activity, android.R.anim.fade_in);
+            anim_in.setDuration(2000);
             anim_first  = AnimationUtils.loadAnimation(activity, android.R.anim.fade_in);
+            anim_first.setDuration(2000);
         }
 
         @Override
         protected Void doInBackground(Void... voids) {
             Log.d(DEBUG_TAG, "doInBackground");
             int i = 0;
-            while (i<1000) {
-                f = new File(Environment.getExternalStorageDirectory()+"/naamat/"+i+".jpg");
-                if (f.exists()) {
-                    Log.d(DEBUG_TAG, "Found file "+f.getAbsolutePath()+", publishing progress");
-                    publishProgress(BitmapFactory.decodeFile(f.getAbsolutePath()));
-                    try {
-                        Log.d(DEBUG_TAG, "Sleeping");
-                        Thread.sleep(6000);
-                    } catch (InterruptedException ie) {
-                        // nuttin
+            int sleepamount = 0;
+            Random rand = new Random();
+            boolean loopcond = true;
+            while (loopcond) {
+                File dir = new File(Environment.getExternalStorageDirectory()+"/NAAMAT/");
+                File[] dirList = dir.listFiles(new FilenameFilter() {
+                    @Override
+                    public boolean accept(File dir, String filename) {
+                        return (filename.toLowerCase().endsWith(".jpg") &&
+                                !filename.toLowerCase().startsWith("."));
                     }
-                } else
-                    Log.d(DEBUG_TAG, "File "+f.getAbsolutePath()+" not found");
-                i++;
-                i = i % 10;
+                });
+                if (dirList != null) {
+                    for (File f : dirList) {
+                        Log.d(DEBUG_TAG, "Found file " + f.getAbsolutePath() + ", publishing progress");
+                        publishProgress(BitmapFactory.decodeFile(f.getAbsolutePath()));
+                        sleepamount = 37000 + (rand.nextInt(61)*100); // nextInt() excludes the upper limit, this should yield 37,1..43,0.
+                        try {
+                            Log.d(DEBUG_TAG, "Sleeping for "+sleepamount+" milliseconds");
+                            Thread.sleep(sleepamount);
+                        } catch (InterruptedException ie) {
+                            // do nothing
+                        }
+                    }
+                }
             }
             Log.d(DEBUG_TAG, "Returning from doInBackground");
             return null;
