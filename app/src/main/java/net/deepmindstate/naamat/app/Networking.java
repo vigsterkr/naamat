@@ -58,13 +58,19 @@ public class Networking {
         new Thread(new Runnable() {
             @Override
             public void run() {
+                int i;
                 byte buf[] = new byte[1];
                 buf[0] = 'S';
                 DatagramPacket pack = new DatagramPacket(buf, buf.length, group, port);
-                try {
-                    sendsocket.send(pack);
-                } catch (IOException e) {
-                    e.printStackTrace();
+                for (i=0; i<5; i++) {
+                    try {
+                        sendsocket.send(pack);
+                        Thread.sleep(100);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
                 }
                 sendsocket.close();
                 Log.d(DEBUG_TAG, "Sending socket closed");
