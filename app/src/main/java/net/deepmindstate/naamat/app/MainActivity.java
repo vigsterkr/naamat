@@ -35,6 +35,7 @@ public class MainActivity extends Activity {
 
     public static String START_ACTION = "net.deepmindstate.naamat.app.startSlideshow";
     public static String STOP_ACTION = "net.deepmindstate.naamat.app.stopSlideshow";
+    public static String RESET_ACTION = "net.deepmindstate.naamat.app.resetSlideshow";
 
     Networking networkHandler;
     SlideShowControlReceiver ssControlReceiver;
@@ -100,10 +101,26 @@ public class MainActivity extends Activity {
 
     @Override
     public boolean onTouchEvent(MotionEvent e) {
+        byte type = 0;
+        // stupid trick to distinguish "remote control" from others
+        // TODO: use a property
+        File cfile = new File(Environment.getExternalStorageDirectory()+"/NAAMAT/CONTROL");
         super.onTouchEvent(e);
-        if (!launched && e.getAction()==MotionEvent.ACTION_UP) {
-            Log.d(DEBUG_TAG, "Got touch event, calling sendStartMulticast()");
-            networkHandler.sendStartMulticast();
+        if (cfile.exists()) {
+            Log.d(DEBUG_TAG, "Found control file, parsing touch event");
+            if (!launched && e.getAction()==MotionEvent.ACTION_UP) {
+                Log.d(DEBUG_TAG, "Going to send start command");
+                type = 'S';
+            } else if (launched && e.getAction()==MotionEvent.ACTION_UP) {
+                Log.d(DEBUG_TAG, "Going to send reset command");
+                type = 'R';
+            }
+            if (type != 0) {
+                Log.d(DEBUG_TAG, "Calling sendMulticast()");
+                networkHandler.sendMulticast(type);
+            }
+        } else {
+            Log.d(DEBUG_TAG, "Control file not found, ignoring touchevent");
         }
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
                 WindowManager.LayoutParams.FLAG_FULLSCREEN);
@@ -121,8 +138,9 @@ public class MainActivity extends Activity {
     public class SlideShowControlReceiver extends BroadcastReceiver {
         public void onReceive(Context c, Intent intent) {
             String action  = intent.getAction();
+            Log.d(DEBUG_TAG, "onReceive");
             if(action.equals(START_ACTION)) {
-                Log.d(DEBUG_TAG, "onReceive");
+                Log.d(DEBUG_TAG, "START_ACTION");
                 if (!launched) {
                     Log.d(DEBUG_TAG, "Start slideshow");
                     new ChangeImageTask(MainActivity.this).execute();
@@ -130,6 +148,12 @@ public class MainActivity extends Activity {
                 } else {
                     Log.d(DEBUG_TAG, "Ignoring, already running");
                 }
+            } else if (action.equals(RESET_ACTION)) {
+                Log.d(DEBUG_TAG, "RESET_ACTION");
+                Log.d(DEBUG_TAG, "bailing out...");
+                MainActivity.this.recreate();
+            } else {
+                Log.d(DEBUG_TAG, "unknown action received, ignoring");
             }
         }
     }

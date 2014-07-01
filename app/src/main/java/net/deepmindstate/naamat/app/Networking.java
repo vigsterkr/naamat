@@ -46,8 +46,8 @@ public class Networking {
         }
     }
 
-    public void sendStartMulticast() {
-        Log.d(DEBUG_TAG, "Sending start datagram packet");
+    public void sendMulticast(final byte t) {
+        Log.d(DEBUG_TAG, "Sending datagram packet '" + t + "'");
         try {
             group = InetAddress.getByName(multicastAddress);
             sendsocket = new MulticastSocket();
@@ -60,7 +60,7 @@ public class Networking {
             public void run() {
                 int i;
                 byte buf[] = new byte[1];
-                buf[0] = 'S';
+                buf[0] = t;
                 DatagramPacket pack = new DatagramPacket(buf, buf.length, group, port);
                 for (i=0; i<5; i++) {
                     try {
@@ -99,20 +99,24 @@ public class Networking {
 
                 byte[] buf = new byte[1];
                 while (true) try {
+                    Intent msg = new Intent();
                     DatagramPacket packet = new DatagramPacket(buf, 1);
                     socket.receive(packet);
                     byte[] pdu = packet.getData();
                     if (pdu[0] == 'X') {
-                            /* stop slideshow packet */
+                        /* stop slideshow packet */
                         Log.d(DEBUG_TAG, "Received stop slideshow packet");
-                        Intent msg = new Intent();
                         msg.setAction(MainActivity.STOP_ACTION);
-                        activity.sendBroadcast(msg);
                     } else if (pdu[0] == 'S') {
-                            /* start slideshow packet */
+                        /* start slideshow packet */
                         Log.d(DEBUG_TAG, "Received start slideshow packet");
-                        Intent msg = new Intent();
                         msg.setAction(MainActivity.START_ACTION);
+                    } else if (pdu[0] == 'R') {
+                        /* reset slideshow packet */
+                        Log.d(DEBUG_TAG, "Received reset slideshow packet");
+                        msg.setAction(MainActivity.RESET_ACTION);
+                    }
+                    if (msg.getAction() != null) {
                         activity.sendBroadcast(msg);
                     }
                 } catch (IOException e) {
